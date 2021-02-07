@@ -5,7 +5,7 @@ public class TestMain {
 	
 	public static void main(String[] args) throws Exception {
 //		new HttpServer().startServer();
-		ServerConfig serverConfig=new ServerConfig(8080,UserServlet.class);
+		ServerConfig serverConfig=new ServerConfig(8080,UserAction.class);
 		new HttpServer(serverConfig).startServer();
 	}
 }
