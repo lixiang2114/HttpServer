@@ -533,7 +533,9 @@ public class HttpServletRequest {
 	 * @return 参数值
 	 */
 	public String getJsonBody() {
-		List<String> valueList=getParametersMap().get(ServerConst.JSON_BODY_KEY);
+		Map<String, List<String>> paramMap=getParametersMap();
+		if(null==paramMap) return null;
+		List<String> valueList=paramMap.get(ServerConst.JSON_BODY_KEY);
 		if(null==valueList || 0==valueList.size()) return null;
 		return valueList.get(0);
 	}
@@ -543,7 +545,9 @@ public class HttpServletRequest {
 	 * @return 参数值
 	 */
 	public String getParameter(String paramName) {
-		List<String> valueList=getParametersMap().get(paramName);
+		Map<String, List<String>> paramMap=getParametersMap();
+		if(null==paramMap) return null;
+		List<String> valueList=paramMap.get(paramName);
 		if(null==valueList || 0==valueList.size()) return null;
 		return valueList.get(0);
 	}
@@ -553,7 +557,9 @@ public class HttpServletRequest {
 	 * @return 参数值列表
 	 */
 	public String[] getParameterValues(String paramName) {
-		List<String> valueList=getParametersMap().get(paramName);
+		Map<String, List<String>> paramMap=getParametersMap();
+		if(null==paramMap) return null;
+		List<String> valueList=paramMap.get(paramName);
 		if(null==valueList || 0==valueList.size()) return null;
 		return valueList.toArray(new String[valueList.size()]);
 	}
@@ -564,13 +570,17 @@ public class HttpServletRequest {
 	 */
 	public String getQueryString() {
 		if(null!=queryString) return queryString;
-		StringBuilder builder=new StringBuilder("");
 		Map<String, List<String>> tmpMap=getParametersMap();
+		
+		if(null==tmpMap) return null;
+		StringBuilder builder=new StringBuilder("");
+		
 		for(Map.Entry<String, List<String>> entry:tmpMap.entrySet()) {
 			String key=entry.getKey();
 			List<String> valueList=entry.getValue();
 			for(String value:valueList) builder.append(key).append("=").append(value).append("&");
 		}
+		
 		return queryString=0==builder.length()?"":builder.deleteCharAt(builder.length()-1).toString().trim();
 	}
 	
@@ -619,7 +629,11 @@ public class HttpServletRequest {
 		
 		if(ServerConst.FORM_URLENCODED.equalsIgnoreCase(mimeType) || ServerConst.MULTIPART_FORMDATA.equalsIgnoreCase(mimeType)){
 			List<InterfaceHttpData> httpBodys=postDecoder.getBodyHttpDatas();
-			if(null==httpBodys || 0==httpBodys.size()) return;
+			if(null==httpBodys || 0==httpBodys.size()) {
+				parametersMap=Collections.unmodifiableMap(accumulateMap);
+				return;
+			}
+			
 			try{
 				File uploadFile=null;
 				ArrayList<File> fileList=new ArrayList<File>();
@@ -647,20 +661,25 @@ public class HttpServletRequest {
 		
 		if(ServerConst.FORM_JSON.equalsIgnoreCase(mimeType)){
 			ByteBuf byteBuf=((FullHttpRequest)httpRequest).content();
-			if(null==byteBuf) return;
+			if(null==byteBuf) {
+				parametersMap=Collections.unmodifiableMap(accumulateMap);
+				return;
+			}
+			
 			String jsonMsgBody = byteBuf.toString(getCharset());
-			if(null==jsonMsgBody) return;
-			jsonMsgBody=jsonMsgBody.trim();
-			if(0==jsonMsgBody.length()) return;
+			if(null==jsonMsgBody || 0==(jsonMsgBody=jsonMsgBody.trim()).length()) {
+				parametersMap=Collections.unmodifiableMap(accumulateMap);
+				return;
+			}
 			
 			HashMap<String, Object> tmpMap=new HashMap<String,Object>();
 			tmpMap.put(ServerConst.JSON_BODY_KEY, jsonMsgBody);
 			
 			try {
 				tmpMap.putAll(ServerConst.MAPPER.readValue(jsonMsgBody, HashMap.class));
-			} catch (IOException e) {}
-			
-			if(null==tmpMap || 0==tmpMap.size()) return;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			
 			for(Entry<String, Object> entry:tmpMap.entrySet()) {
 				String key=entry.getKey().trim();
