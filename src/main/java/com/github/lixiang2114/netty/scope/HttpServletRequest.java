@@ -124,7 +124,7 @@ public class HttpServletRequest {
 	/**
 	 * 请求参数字典
 	 */
-	private Map<String,List<String>> parametersMap;
+	private Map<String,List<Object>> parametersMap;
 	
 	/**
 	 * 会话作用域字典
@@ -533,11 +533,35 @@ public class HttpServletRequest {
 	 * @return 参数值
 	 */
 	public String getJsonBody() {
-		Map<String, List<String>> paramMap=getParametersMap();
+		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
-		List<String> valueList=paramMap.get(ServerConst.JSON_BODY_KEY);
+		List<Object> valueList=paramMap.get(ServerConst.JSON_BODY_KEY);
 		if(null==valueList || 0==valueList.size()) return null;
-		return valueList.get(0);
+		return (String)valueList.get(0);
+	}
+	
+	/**
+	 * 获取MIME=application/octet-stream的HttpBody值
+	 * @return 参数值
+	 */
+	public String getStreamBody() {
+		Map<String, List<Object>> paramMap=getParametersMap();
+		if(null==paramMap) return null;
+		List<Object> valueList=paramMap.get(ServerConst.STREAM_BODY_KEY);
+		if(null==valueList || 0==valueList.size()) return null;
+		return (String)valueList.get(0);
+	}
+	
+	/**
+	 * 获取MIME=application/octet-stream的HttpBody值
+	 * @return 参数值
+	 */
+	public ByteBuf getBodyByteBuf() {
+		Map<String, List<Object>> paramMap=getParametersMap();
+		if(null==paramMap) return null;
+		List<Object> valueList=paramMap.get(ServerConst.STREAM_BODY_KEY);
+		if(null==valueList || 0==valueList.size()) return null;
+		return (ByteBuf)valueList.get(1);
 	}
 	
 	/**
@@ -545,11 +569,11 @@ public class HttpServletRequest {
 	 * @return 参数值
 	 */
 	public String getParameter(String paramName) {
-		Map<String, List<String>> paramMap=getParametersMap();
+		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
-		List<String> valueList=paramMap.get(paramName);
+		List<Object> valueList=paramMap.get(paramName);
 		if(null==valueList || 0==valueList.size()) return null;
-		return valueList.get(0);
+		return (String)valueList.get(0);
 	}
 	
 	/**
@@ -557,9 +581,9 @@ public class HttpServletRequest {
 	 * @return 参数值列表
 	 */
 	public String[] getParameterValues(String paramName) {
-		Map<String, List<String>> paramMap=getParametersMap();
+		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
-		List<String> valueList=paramMap.get(paramName);
+		List<Object> valueList=paramMap.get(paramName);
 		if(null==valueList || 0==valueList.size()) return null;
 		return valueList.toArray(new String[valueList.size()]);
 	}
@@ -570,15 +594,15 @@ public class HttpServletRequest {
 	 */
 	public String getQueryString() {
 		if(null!=queryString) return queryString;
-		Map<String, List<String>> tmpMap=getParametersMap();
+		Map<String, List<Object>> tmpMap=getParametersMap();
 		
 		if(null==tmpMap) return null;
 		StringBuilder builder=new StringBuilder("");
 		
-		for(Map.Entry<String, List<String>> entry:tmpMap.entrySet()) {
+		for(Map.Entry<String, List<Object>> entry:tmpMap.entrySet()) {
 			String key=entry.getKey();
-			List<String> valueList=entry.getValue();
-			for(String value:valueList) builder.append(key).append("=").append(value).append("&");
+			List<Object> valueList=entry.getValue();
+			for(Object value:valueList) builder.append(key).append("=").append(value).append("&");
 		}
 		
 		return queryString=0==builder.length()?"":builder.deleteCharAt(builder.length()-1).toString().trim();
@@ -588,7 +612,7 @@ public class HttpServletRequest {
 	 * 获取参数字典
 	 * @return 请求参数字典
 	 */
-	public Map<String,List<String>> getParametersMap() {
+	public Map<String,List<Object>> getParametersMap() {
 		if(null==parametersMap) parseHttpProtocol();
 		return parametersMap;
 	}
@@ -617,9 +641,13 @@ public class HttpServletRequest {
 	 */
 	private final void parseHttpProtocol() {
 		QueryStringDecoder queryDecoder = new QueryStringDecoder(getRequestURI(), getCharset());
-		HashMap<String, List<String>> accumulateMap=new HashMap<String, List<String>>();
+		HashMap<String, List<Object>> accumulateMap=new HashMap<String, List<Object>>();
 		Map<String, List<String>> uriParamMap=queryDecoder.parameters();
-		if(null!=uriParamMap) accumulateMap.putAll(uriParamMap);
+		if(null!=uriParamMap) {
+			for(Map.Entry<String, List<String>> entry:uriParamMap.entrySet()){
+				accumulateMap.put(entry.getKey(),entry.getValue().stream().map(x->(Object)x).collect(Collectors.toList()));
+			}
+		}
 		
 		String mimeType=getMimeType();
 		if(null==mimeType) {
@@ -641,8 +669,8 @@ public class HttpServletRequest {
 	            	if(HttpDataType.Attribute == bodyPart.getHttpDataType()) {
 	            		Attribute attribute = (Attribute) bodyPart;
 	            		String key=attribute.getName().trim();
-	            		List<String> valueList=accumulateMap.get(key);
-	            		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<String>());
+	            		List<Object> valueList=accumulateMap.get(key);
+	            		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<Object>());
 	            		valueList.add(attribute.getValue());
 	            	}else if(bodyPart.getHttpDataType() != HttpDataType.FileUpload){
 	            		FileUpload fileUpload = (FileUpload) bodyPart;
@@ -683,10 +711,31 @@ public class HttpServletRequest {
 			
 			for(Entry<String, Object> entry:tmpMap.entrySet()) {
 				String key=entry.getKey().trim();
-        		List<String> valueList=accumulateMap.get(key);
-        		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<String>());
+        		List<Object> valueList=accumulateMap.get(key);
+        		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<Object>());
         		valueList.add(entry.getValue().toString());
 			}
+			parametersMap=Collections.unmodifiableMap(accumulateMap);
+			return;
+		}
+		
+		if(ServerConst.BODY_STREAM.equalsIgnoreCase(mimeType)){
+			ByteBuf byteBuf=((FullHttpRequest)httpRequest).content();
+			if(null==byteBuf) {
+				parametersMap=Collections.unmodifiableMap(accumulateMap);
+				return;
+			}
+			
+			String jsonMsgBody = byteBuf.toString(getCharset());
+			if(null==jsonMsgBody || 0==(jsonMsgBody=jsonMsgBody.trim()).length()) {
+				parametersMap=Collections.unmodifiableMap(accumulateMap);
+				return;
+			}
+			
+			ArrayList<Object> valueList=new ArrayList<Object>();
+			valueList.add(jsonMsgBody);
+			valueList.add(byteBuf);
+			accumulateMap.put(ServerConst.STREAM_BODY_KEY, valueList);
 			parametersMap=Collections.unmodifiableMap(accumulateMap);
 			return;
 		}

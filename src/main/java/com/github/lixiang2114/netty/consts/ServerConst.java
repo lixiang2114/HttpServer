@@ -30,6 +30,11 @@ public interface ServerConst {
     public static final String FAVICON_ICO = "/favicon.ico";
     
     /**
+	 * MIME类型为application/octet-stream的参数键名
+	 */
+	public static final String STREAM_BODY_KEY = "streamBody";
+    
+    /**
 	 * MIME类型为application/json的参数键名
 	 */
 	public static final String JSON_BODY_KEY = "jsonBody";
@@ -78,6 +83,11 @@ public interface ServerConst {
      * MIME类型字段值
      */
     public static final String FORM_JSON="application/json";
+    
+    /**
+     * MIME类型字段值
+     */
+    public static final String BODY_STREAM="application/octet-stream";
     
     /**
      * MIME类型字段值
