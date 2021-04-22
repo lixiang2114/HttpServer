@@ -147,7 +147,7 @@ public class HttpServletRequest {
 	 * 清除磁盘上的数据并获取Post解码器
 	 */
 	private void cleanAndInitPostDecoder(){
-		if (postDecoder != null) postDecoder.cleanFiles();
+		if (null!=postDecoder) postDecoder.cleanFiles();
 		postDecoder = new HttpPostRequestDecoder(serverConfig.dataFactory(), httpRequest, serverConfig.charset);
 	}
 	
@@ -265,7 +265,7 @@ public class HttpServletRequest {
 	 * @return 协议名称
 	 */
 	public String getHttpProtocol() {
-		return httpVersion.protocolName().toString();
+		return httpVersion.protocolName();
 	}
 	
 	/**
@@ -332,7 +332,9 @@ public class HttpServletRequest {
 	 */
 	public String getSessionId() {
 		if(null!=sessionId) return sessionId;
-		return getCookie(serverConfig.sessionId);
+		String jsessionIDStr=getCookie(serverConfig.sessionId);
+		if(null==jsessionIDStr || (jsessionIDStr=jsessionIDStr.trim()).isEmpty()) return null;
+		return ServerConst.SEMIC_REGEX.split(jsessionIDStr)[0].trim();
 	}
 	
 	/**
@@ -400,11 +402,11 @@ public class HttpServletRequest {
 		String[] array=ServerConst.SEMIC_REGEX.split(contentType);
 		if(2>array.length) return null;
 		String charsetPart=array[1].trim();
-		if(0==charsetPart.length()) return null;
+		if(charsetPart.isEmpty()) return null;
 		String[] charsetArray=ServerConst.EQUAL_REGEX.split(charsetPart);
 		if(2>charsetArray.length) return null;
 		String charsetName=charsetArray[1].trim();
-		return 0==charsetName.length()?null:(this.characterEncoding=charsetName);
+		return charsetName.isEmpty()?null:(this.characterEncoding=charsetName);
 	}
 	
 	/**
@@ -413,10 +415,10 @@ public class HttpServletRequest {
 	 */
 	public String getContentType(){
 		if(null!=this.contentType) return this.contentType;
-		String contentType=httpHeader.getAndConvert(HttpHeader.CONTENT_TYPE);
+		String contentType=httpHeader.get(HttpHeader.CONTENT_TYPE);;
 		if(null==contentType) return null;
 		contentType=contentType.trim();
-		return 0==contentType.length()?null:(this.contentType=contentType);
+		return contentType.isEmpty()?null:(this.contentType=contentType);
 	}
 	
 	/**
@@ -426,8 +428,7 @@ public class HttpServletRequest {
 	 */
 	public boolean containsHeader(String name) {
 		if(null==name) return false;
-		name=name.trim();
-		return  0==name.length()?false:httpHeader.contains(name);
+		return  (name=name.trim()).isEmpty()?false:httpHeader.contains(name);
 	}
 	
 	/**
@@ -437,8 +438,7 @@ public class HttpServletRequest {
 	 */
 	public String getHeader(String name) {
 		if(null==name) return null;
-		name=name.trim();
-		return 0==name.length()?null:httpHeader.getAndConvert(name);
+		return (name=name.trim()).isEmpty()?null:httpHeader.get(name);
 	}
 	
 	/**
@@ -448,24 +448,23 @@ public class HttpServletRequest {
 	 */
 	public Set<String> getHeaders(String name) {
 		if(null==name) return null;
-		name=name.trim();
-		if(0==name.length()) return null;
-		return Collections.unmodifiableSet(new HashSet<String>(httpHeader.getAllAndConvert(name)));
+		if((name=name.trim()).isEmpty()) return null;
+		return Collections.unmodifiableSet(new HashSet<String>(httpHeader.getAll(name)));
 	}
 	
 	/**
 	 * 获取Http协议头域字典
-	 * 由于Http请求消息头是始终存在的,所有本方法返回非NULL非空值()
+	 * 由于Http请求消息头是始终存在的,所以本方法返回非NULL非空值
 	 * @return
 	 */
 	public Map<String, String> getHeaderMap() {
 		HashMap<String,String> tmpMap=new HashMap<String,String>();
-		for(Entry<String, String> entry:httpHeader.entriesConverted()) {
+		for(Entry<String, String> entry:httpHeader) {
 			if(null==entry) continue;
 			String key=entry.getKey();
 			if(null==key) continue;
 			key=key.trim();
-			if(0==key.length()) continue;
+			if(key.isEmpty()) continue;
 			String value=entry.getValue();
 			if(null==value) continue;
 			tmpMap.put(key, value);
@@ -480,8 +479,7 @@ public class HttpServletRequest {
 	 */
 	public String getCookie(String name) {
 		if(null==name) return null;
-		name=name.trim();
-		if(0==name.length()) return null;
+		if((name=name.trim()).isEmpty()) return null;
 		
 		Set<String> tmpSet=getCookies();
 		if(null==tmpSet) return null;
@@ -504,9 +502,9 @@ public class HttpServletRequest {
 		Set<String> tmpSet=getHeaders(HttpHeader.COOKIE).stream()
 		.filter(e->{return null!=e;})
 		.map(e->e.trim())
-		.filter(e->{return 0!=e.length();})
+		.filter(e->{return !e.isEmpty();})
 		.collect(Collectors.toSet());
-		return 0==tmpSet.size()?null:Collections.unmodifiableSet(tmpSet);
+		return tmpSet.isEmpty()?null:Collections.unmodifiableSet(tmpSet);
 	}
 	
 	/**
@@ -518,11 +516,13 @@ public class HttpServletRequest {
 		Set<String> tmpSet=getCookies();
 		if(null==tmpSet) return null;
 		
+		String key=null;
 		HashMap<String,String> tmpMap=new HashMap<String,String>();
 		for(String entry:tmpSet){
 			String[] keyVals=ServerConst.EQUAL_REGEX.split(entry);
 			if(2>keyVals.length) continue;
-			tmpMap.put(keyVals[0].trim(), keyVals[1].trim());
+			if((key=keyVals[0].trim()).isEmpty()) continue;
+			tmpMap.put(key, keyVals[1].trim());
 		}
 		
 		return Collections.unmodifiableMap(tmpMap);
@@ -536,7 +536,7 @@ public class HttpServletRequest {
 		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
 		List<Object> valueList=paramMap.get(ServerConst.JSON_BODY_KEY);
-		if(null==valueList || 0==valueList.size()) return null;
+		if(null==valueList || valueList.isEmpty()) return null;
 		return (String)valueList.get(0);
 	}
 	
@@ -548,7 +548,7 @@ public class HttpServletRequest {
 		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
 		List<Object> valueList=paramMap.get(ServerConst.STREAM_BODY_KEY);
-		if(null==valueList || 0==valueList.size()) return null;
+		if(null==valueList || valueList.isEmpty()) return null;
 		return (String)valueList.get(0);
 	}
 	
@@ -560,7 +560,7 @@ public class HttpServletRequest {
 		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
 		List<Object> valueList=paramMap.get(ServerConst.STREAM_BODY_KEY);
-		if(null==valueList || 0==valueList.size()) return null;
+		if(null==valueList || valueList.isEmpty()) return null;
 		return (ByteBuf)valueList.get(1);
 	}
 	
@@ -572,7 +572,7 @@ public class HttpServletRequest {
 		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
 		List<Object> valueList=paramMap.get(paramName);
-		if(null==valueList || 0==valueList.size()) return null;
+		if(null==valueList || valueList.isEmpty()) return null;
 		return (String)valueList.get(0);
 	}
 	
@@ -584,7 +584,7 @@ public class HttpServletRequest {
 		Map<String, List<Object>> paramMap=getParametersMap();
 		if(null==paramMap) return null;
 		List<Object> valueList=paramMap.get(paramName);
-		if(null==valueList || 0==valueList.size()) return null;
+		if(null==valueList || valueList.isEmpty()) return null;
 		return valueList.toArray(new String[valueList.size()]);
 	}
 	
@@ -601,8 +601,13 @@ public class HttpServletRequest {
 		
 		for(Map.Entry<String, List<Object>> entry:tmpMap.entrySet()) {
 			String key=entry.getKey();
+			if(null==key || (key=key.trim()).isEmpty()) continue;
 			List<Object> valueList=entry.getValue();
-			for(Object value:valueList) builder.append(key).append("=").append(value).append("&");
+			if(null==valueList || valueList.isEmpty()) continue;
+			for(Object value:valueList) {
+				if(null==value) continue;
+				builder.append(key).append("=").append(value).append("&");
+			}
 		}
 		
 		return queryString=0==builder.length()?"":builder.deleteCharAt(builder.length()-1).toString().trim();
@@ -643,9 +648,13 @@ public class HttpServletRequest {
 		QueryStringDecoder queryDecoder = new QueryStringDecoder(getRequestURI(), getCharset());
 		HashMap<String, List<Object>> accumulateMap=new HashMap<String, List<Object>>();
 		Map<String, List<String>> uriParamMap=queryDecoder.parameters();
-		if(null!=uriParamMap) {
+		if(null!=uriParamMap && !uriParamMap.isEmpty()) {
 			for(Map.Entry<String, List<String>> entry:uriParamMap.entrySet()){
-				accumulateMap.put(entry.getKey(),entry.getValue().stream().map(x->(Object)x).collect(Collectors.toList()));
+				String key=entry.getKey();
+				if(null==key || (key=key.trim()).isEmpty()) continue;
+				List<String> valueList=entry.getValue();
+				if(null==valueList || valueList.isEmpty()) continue;
+				accumulateMap.put(key,valueList.stream().map(x->(Object)x).collect(Collectors.toList()));
 			}
 		}
 		
@@ -657,25 +666,29 @@ public class HttpServletRequest {
 		
 		if(ServerConst.FORM_URLENCODED.equalsIgnoreCase(mimeType) || ServerConst.MULTIPART_FORMDATA.equalsIgnoreCase(mimeType)){
 			List<InterfaceHttpData> httpBodys=postDecoder.getBodyHttpDatas();
-			if(null==httpBodys || 0==httpBodys.size()) {
+			if(null==httpBodys || httpBodys.isEmpty()) {
 				parametersMap=Collections.unmodifiableMap(accumulateMap);
 				return;
 			}
 			
 			try{
-				File uploadFile=null;
 				ArrayList<File> fileList=new ArrayList<File>();
 				for (InterfaceHttpData bodyPart : httpBodys) {
+					if(null==bodyPart) continue;
 	            	if(HttpDataType.Attribute == bodyPart.getHttpDataType()) {
 	            		Attribute attribute = (Attribute) bodyPart;
-	            		String key=attribute.getName().trim();
+	            		String key=attribute.getName();
+	            		if(null==key || (key=key.trim()).isEmpty()) continue;
+	            		String value=attribute.getValue();
+	            		if(null==value || (value=value.trim()).isEmpty()) continue;
 	            		List<Object> valueList=accumulateMap.get(key);
 	            		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<Object>());
-	            		valueList.add(attribute.getValue());
-	            	}else if(bodyPart.getHttpDataType() != HttpDataType.FileUpload){
+	            		valueList.add(value);
+	            	}else if(HttpDataType.FileUpload != bodyPart.getHttpDataType()){
 	            		FileUpload fileUpload = (FileUpload) bodyPart;
 	            		if(!fileUpload.isCompleted()) continue;
-	            		fileList.add(uploadFile=new File(serverConfig.uploadDirectory,fileUpload.getFilename()));
+	            		File uploadFile=new File(serverConfig.uploadDirectory,fileUpload.getFilename());
+	            		fileList.add(uploadFile);
 	            		fileUpload.renameTo(uploadFile);
 	            	}
 	            }
@@ -695,7 +708,7 @@ public class HttpServletRequest {
 			}
 			
 			String jsonMsgBody = byteBuf.toString(getCharset());
-			if(null==jsonMsgBody || 0==(jsonMsgBody=jsonMsgBody.trim()).length()) {
+			if(null==jsonMsgBody || (jsonMsgBody=jsonMsgBody.trim()).isEmpty()) {
 				parametersMap=Collections.unmodifiableMap(accumulateMap);
 				return;
 			}
@@ -710,10 +723,12 @@ public class HttpServletRequest {
 			}
 			
 			for(Entry<String, Object> entry:tmpMap.entrySet()) {
-				String key=entry.getKey().trim();
+				String key=entry.getKey();
+				Object value=entry.getValue();
+				if(null==key || null==value || (key=key.trim()).isEmpty()) continue;
         		List<Object> valueList=accumulateMap.get(key);
         		if(null==valueList) accumulateMap.put(key, valueList=new ArrayList<Object>());
-        		valueList.add(entry.getValue().toString());
+        		valueList.add(value.toString());
 			}
 			parametersMap=Collections.unmodifiableMap(accumulateMap);
 			return;
@@ -727,7 +742,7 @@ public class HttpServletRequest {
 			}
 			
 			String jsonMsgBody = byteBuf.toString(getCharset());
-			if(null==jsonMsgBody || 0==(jsonMsgBody=jsonMsgBody.trim()).length()) {
+			if(null==jsonMsgBody || (jsonMsgBody=jsonMsgBody.trim()).isEmpty()) {
 				parametersMap=Collections.unmodifiableMap(accumulateMap);
 				return;
 			}

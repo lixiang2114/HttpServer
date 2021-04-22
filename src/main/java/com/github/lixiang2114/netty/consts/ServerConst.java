@@ -30,20 +30,25 @@ public interface ServerConst {
     public static final String FAVICON_ICO = "/favicon.ico";
     
     /**
+   	 * MIME类型为application/json的参数键名
+   	 */
+   	public static final String JSON_BODY_KEY = "jsonBody";
+       
+   /**
+    * 连接关闭头域值
+    */
+   public static final String CONNECTION_CLOSE = "close";
+   
+   /**
+    * MIME类型字段值
+    */
+   public static final String FORM_JSON="application/json";
+    
+    /**
 	 * MIME类型为application/octet-stream的参数键名
 	 */
 	public static final String STREAM_BODY_KEY = "streamBody";
-    
-    /**
-	 * MIME类型为application/json的参数键名
-	 */
-	public static final String JSON_BODY_KEY = "jsonBody";
-    
-    /**
-     * 连接关闭头域值
-     */
-    public static final String CONNECTION_CLOSE = "close";
-    
+	
     /**
    	 * 按位与正则式
    	 */
@@ -78,11 +83,6 @@ public interface ServerConst {
 	 * 服务器响应头域ContentType默认值
 	 */
 	public static final String CONTENT_TYPE = "text/html;charset=UTF-8";
-    
-    /**
-     * MIME类型字段值
-     */
-    public static final String FORM_JSON="application/json";
     
     /**
      * MIME类型字段值

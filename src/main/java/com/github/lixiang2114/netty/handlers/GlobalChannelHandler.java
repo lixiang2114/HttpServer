@@ -33,7 +33,7 @@ public class GlobalChannelHandler extends ChannelInitializer<SocketChannel>{
 	private ServletContext servletContext;
 	
 	/**
-	 * 构造器
+	 * 构造器(服务启动时回调)
 	 * @param config Http服务器配置
 	 */
 	public GlobalChannelHandler(ServerConfig serverConfig) throws Exception{
@@ -43,6 +43,7 @@ public class GlobalChannelHandler extends ChannelInitializer<SocketChannel>{
 	}
 
 	/**
+	 * 请求时回调0
 	 * 各客户端的每次请求都将调用此方法(此方法的调用粒度是请求级别)
 	 * @param channel 客户端通道
 	 */

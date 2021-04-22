@@ -111,16 +111,6 @@ public class ServerConfig {
 	public Integer maxQueueSize=1024;
 	
 	/**
-	 * 写缓冲区高水位标记点
-	 */
-	public Integer writeBufferHigMark;
-	
-	/**
-	 * 写缓冲区低水位标记点
-	 */
-	public Integer writeBufferLowMark;
-	
-	/**
 	 * Web应用服务器会话跟踪标识
 	 */
 	public String sessionId="JSESSIONID";

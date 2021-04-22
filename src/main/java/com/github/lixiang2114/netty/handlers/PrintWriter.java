@@ -59,8 +59,7 @@ public class PrintWriter {
 	public void write(String message) {
 		ByteBuf byteBuf = Unpooled.wrappedBuffer(message.getBytes(request.getCharset()));
 		String length=String.valueOf(byteBuf.readableBytes());
-		
-		FullHttpResponse response = httpResponse.copy(byteBuf);
+		FullHttpResponse response = httpResponse.replace(byteBuf);
 		response.headers().set(HttpHeader.CONTENT_LENGTH, length);
 		futureList.add(channel.write(response));
 		channel.flush();

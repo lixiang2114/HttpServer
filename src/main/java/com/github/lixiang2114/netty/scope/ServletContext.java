@@ -15,14 +15,14 @@ public class ServletContext {
 	private static ServletContext servletContext;
 	
 	/**
-	 * 客户端会话字典
-	 */
-	private ConcurrentHashMap<String, HttpSession> sessionMap=new ConcurrentHashMap<String, HttpSession>();
-	
-	/**
 	 * 应用作用域字典
 	 */
 	private ConcurrentHashMap<String, Object> applicationScope=new ConcurrentHashMap<String, Object>();
+	
+	/**
+	 * 客户端会话字典
+	 */
+	private ConcurrentHashMap<String, HttpSession> sessionMap=new ConcurrentHashMap<String, HttpSession>();
 	
 	private ServletContext(){}
 	

@@ -40,7 +40,7 @@ public class HttpSession {
 	
 	public HttpSession(ServletContext servletContext){
 		this.servletContext=servletContext;
-		this.servletContext.setHttpSession(sessionId=generateSessionID(), refleshSessionStatus());
+		this.servletContext.setHttpSession(sessionId=generateSessionID(), this);
 	}
 	
 	public String getSessionId() {

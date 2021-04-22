@@ -5,9 +5,11 @@ import com.github.lixiang2114.netty.context.SessionScheduler;
 import com.github.lixiang2114.netty.handlers.GlobalChannelHandler;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.WriteBufferWaterMark;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
@@ -113,13 +115,14 @@ public class HttpServer {
 		if(null!=config.autoRead) bootstrap.option(ChannelOption.AUTO_READ, config.autoRead);
 		if(null!=config.reuseAddr) bootstrap.option(ChannelOption.SO_REUSEADDR, config.reuseAddr);
 		if(null!=config.serverRcvBuf) bootstrap.option(ChannelOption.SO_RCVBUF, config.serverRcvBuf);
+		bootstrap.option(ChannelOption.WRITE_BUFFER_WATER_MARK, WriteBufferWaterMark.DEFAULT);
 		if(null!=config.maxQueueSize) bootstrap.option(ChannelOption.SO_BACKLOG, config.maxQueueSize);
 		if(null!=config.recvBufAllocator) bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, config.recvBufAllocator);
 		if(null!=config.msgSizeEsimator) bootstrap.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, config.msgSizeEsimator);
 		if(null!=config.maxWriteTimesPerLoop) bootstrap.option(ChannelOption.WRITE_SPIN_COUNT, config.maxWriteTimesPerLoop);
-		if(null!=config.writeBufferHigMark) bootstrap.option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, config.writeBufferHigMark);
-		if(null!=config.writeBufferLowMark) bootstrap.option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, config.writeBufferLowMark);
-		if(null!=config.serverMaxMsgNumPerRead) bootstrap.option(ChannelOption.MAX_MESSAGES_PER_READ, config.serverMaxMsgNumPerRead);
+		if(null!=config.serverMaxMsgNumPerRead) {
+			bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator().maxMessagesPerRead(config.serverMaxMsgNumPerRead));
+		}
 	}
 	
 	/**
@@ -137,7 +140,9 @@ public class HttpServer {
 		if(null!=config.readTimeoutMills) bootstrap.childOption(ChannelOption.SO_TIMEOUT, config.readTimeoutMills);
 		if(null!=config.recvBufAllocator) bootstrap.childOption(ChannelOption.RCVBUF_ALLOCATOR, config.recvBufAllocator);
 		if(null!=config.connTimeoutMills) bootstrap.childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.connTimeoutMills);
-		if(null!=config.clientMaxMsgNumPerRead) bootstrap.childOption(ChannelOption.MAX_MESSAGES_PER_READ, config.clientMaxMsgNumPerRead);
+		if(null!=config.clientMaxMsgNumPerRead) {
+			bootstrap.childOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator().maxMessagesPerRead(config.clientMaxMsgNumPerRead));
+		}
 	}
 	
 	/**
