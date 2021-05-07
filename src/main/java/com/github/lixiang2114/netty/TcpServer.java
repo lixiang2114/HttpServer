@@ -1,8 +1,7 @@
 package com.github.lixiang2114.netty;
 
 import com.github.lixiang2114.netty.context.ServerConfig;
-import com.github.lixiang2114.netty.context.SessionScheduler;
-import com.github.lixiang2114.netty.handlers.HttpChannelInitializer;
+import com.github.lixiang2114.netty.handlers.TcpChannelInitializer;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
@@ -15,23 +14,18 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 /**
  * @author Lixiang
- * @description HTTP服务器
+ * @description TCP服务端
  */
-public class HttpServer {
+public class TcpServer {
 	/**
-	 * HTTP服务器配置
+	 * TCP服务器配置
 	 */
 	public ServerConfig config;
 	
 	/**
-	 * HTTP服务器关闭操作句柄
+	 * TCP服务器关闭操作句柄
 	 */
 	private ChannelFuture closeFuture;
-	
-	/**
-	 * 客户端会话调度器
-	 */
-	private SessionScheduler sessionScheduler;
 	
 	/**
 	 * Socket线程池
@@ -49,34 +43,32 @@ public class HttpServer {
 	private  NioServerSocketChannel serverChannel;
 	
 	/**
-	 * HTTP客户端通道初始化器
+	 * TCP客户端通道初始化器
 	 */
-	private HttpChannelInitializer httpChannelInitializer;
+	private TcpChannelInitializer tcpChannelInitializer;
 	
-	public HttpServer() throws Exception{
+	public TcpServer() throws Exception{
 		this(null);
 	}
 	
-	public HttpServer(ServerConfig config) throws Exception{
+	public TcpServer(ServerConfig config) throws Exception{
 		this.config = null==config?new ServerConfig():config;
-		this.sessionScheduler=new SessionScheduler(this.config);
-		httpChannelInitializer=new HttpChannelInitializer(this.config);
+		tcpChannelInitializer=new TcpChannelInitializer(this.config);
 		this.socketThreadPool = new NioEventLoopGroup(this.config.socketThreadNums);
 		this.workerThreadPool = new NioEventLoopGroup(this.config.workerThreadNums);
 	}
 	
 	/**
-	 * 关闭HTTP服务器
+	 * 关闭TCP服务器
 	 * @throws Exception
 	 */
 	public void shutdownServer() throws Exception{
 		if(null!=closeFuture) closeFuture.cancel(true);
-		httpChannelInitializer.destoryContext();
 		config.started=false;
 	}
 	
 	/**
-	 * 启动HTTP服务器
+	 * 启动TCP服务器
 	 * @throws Exception
 	 */
 	public void startServer() throws Exception{
@@ -84,7 +76,7 @@ public class HttpServer {
 			ServerBootstrap bootstrap = new ServerBootstrap();
 			bootstrap.group(socketThreadPool, workerThreadPool);
 			bootstrap.channel(NioServerSocketChannel.class);
-			bootstrap.childHandler(httpChannelInitializer);
+			bootstrap.childHandler(tcpChannelInitializer);
 			
 			setServerChannelParams(config,bootstrap);
 			setClientChannelParams(config,bootstrap);
@@ -93,14 +85,11 @@ public class HttpServer {
 			serverChannel=(NioServerSocketChannel)future.channel();
 			closeFuture=serverChannel.closeFuture();
 			
-			System.out.println("HttpServer Listening On Port: " + ((config.started=true)?config.port:"Unkown"));
-			sessionScheduler.startupScheduler();
+			System.out.println("TcpServer Listening On Port: " + ((config.started=true)?config.port:"Unkown"));
 			closeFuture.sync();
 		}finally{
 			config.started=false;
 			serverChannel.close();
-			sessionScheduler.destoryScheduler();
-			httpChannelInitializer.destoryContext();
 			socketThreadPool.shutdownGracefully();
 			workerThreadPool.shutdownGracefully();
 			if(null!=closeFuture) closeFuture.cancel(true);
@@ -159,7 +148,7 @@ public class HttpServer {
 	 * @throws Exception 
 	 */
 	public static void start(ServerConfig config) throws Exception{
-		new HttpServer(config).startServer();
+		new TcpServer(config).startServer();
 	}
 	
 	public ChannelFuture getCloseFuture() {

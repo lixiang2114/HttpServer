@@ -13,10 +13,10 @@ import io.netty.handler.codec.http.HttpServerCodec;
 
 /**
  * @author Lixiang
- * @description 全局通道操作器
+ * @description Http通道初始化器
  * 由于ChannelInitializer是被共享的,因此本操作器实例被多客户端通道所共享
  */
-public class GlobalChannelHandler extends ChannelInitializer<SocketChannel>{
+public class HttpChannelInitializer extends ChannelInitializer<SocketChannel>{
 	/**
 	 * 服务器配置
 	 */
@@ -36,7 +36,7 @@ public class GlobalChannelHandler extends ChannelInitializer<SocketChannel>{
 	 * 构造器(服务启动时回调)
 	 * @param config Http服务器配置
 	 */
-	public GlobalChannelHandler(ServerConfig serverConfig) throws Exception{
+	public HttpChannelInitializer(ServerConfig serverConfig) throws Exception{
 		this.serverConfig=serverConfig;
 		this.servletContext=ServletContext.getInstance();
 		if(serverConfig.servletSingleton) this.dispatcherServlet=HttpServletFactory.getServlet(serverConfig);
@@ -48,8 +48,8 @@ public class GlobalChannelHandler extends ChannelInitializer<SocketChannel>{
 	 * @param channel 客户端通道
 	 */
 	@Override
-    public void initChannel(SocketChannel channel) throws Exception {
-		ChannelPipeline pipeLine=channel.pipeline();
+    public void initChannel(SocketChannel socketChannel) throws Exception {
+		ChannelPipeline pipeLine=socketChannel.pipeline();
 		pipeLine.addLast("httpCodec",new HttpServerCodec());
 		pipeLine.addLast("httpAggregator",new HttpObjectAggregator(serverConfig.maxContentLength));
 		pipeLine.addLast("httpHandler",new HttpChannelHandler(serverConfig,servletContext,dispatcherServlet));

@@ -3,19 +3,26 @@ package com.github.lixiang2114.netty.context;
 import java.io.File;
 import java.nio.charset.Charset;
 
+import com.github.lixiang2114.netty.event.DefaultDriveAction;
+import com.github.lixiang2114.netty.event.Event;
+import com.github.lixiang2114.netty.event.TcpEvent;
 import com.github.lixiang2114.netty.servlet.DefaultAction;
 import com.github.lixiang2114.netty.servlet.Servlet;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.MessageSizeEstimator;
 import io.netty.channel.RecvByteBufAllocator;
+import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
+import io.netty.util.NettyRuntime;
 
 /**
  * @author Lixiang
  * @description Http服务器配置
  */
+@SuppressWarnings("unchecked")
 public class ServerConfig {
 	/**
 	 * 发送数据包的Qos选项
@@ -92,6 +99,11 @@ public class ServerConfig {
 	public Boolean tcpNoDelay=true;
 	
 	/**
+	 * TCP解析帧最大长度(单位:字节)
+	 */
+	public int maxFrameLength=8192;
+	
+	/**
 	 * 服务端上报超时时间(单位:毫秒)
 	 * 某些场景下也表示接收数据超时时间,默认值为0表示无限期等待,
 	 * 若设置一个非负整数值,则在等待时间超过该值时抛出SocketTimeoutException,但输入流并未关闭,可以继续读取数据
@@ -105,6 +117,11 @@ public class ServerConfig {
 	public ByteBufAllocator allocator;
 	
 	/**
+	 * Socket线程池尺寸
+	 */
+	public int socketThreadNums = 1;
+	
+	/**
 	 * IO连接池最大队列尺寸
 	 * 超过此尺寸后,新进入的客户端连接将被丢弃
 	 */
@@ -114,6 +131,13 @@ public class ServerConfig {
 	 * Web应用服务器会话跟踪标识
 	 */
 	public String sessionId="JSESSIONID";
+	
+	/**
+	 * TCP事件是否为单例全局共享
+	 * 单例:全局共享同一个实例
+	 * 多例:实例粒度到请求级别
+	 */
+	public boolean eventSingleton=true;
 	
 	/**
 	 * Servlet是否为单例全局共享
@@ -187,7 +211,7 @@ public class ServerConfig {
 	public MessageSizeEstimator msgSizeEsimator;
 	
 	/**
-	 * Http服务器消息编码类型
+	 * 服务器消息编码类型
 	 */
 	public Charset charset=Charset.defaultCharset();
 	
@@ -197,9 +221,24 @@ public class ServerConfig {
 	public long sessionSchedulerIntervalMillis=120000L;
 	
 	/**
+	 * TCP字节流解析分隔符
+	 */
+	public ByteBuf[] lineDelimiter=Delimiters.lineDelimiter();
+	
+	/**
 	 * 核心Servlet组件(全局共享)
 	 */
 	public Class<? extends Servlet> servletClass=DefaultAction.class;
+	
+	/**
+	 * Worker线程池尺寸
+	 */
+	public int workerThreadNums=2*NettyRuntime.availableProcessors();
+	
+	/**
+	 * TCP事件回调接口类
+	 */
+	public Class<? extends TcpEvent> eventClass=DefaultDriveAction.class;
 	
 	/**
 	 * Multipart中上传文件存储目录
@@ -217,23 +256,39 @@ public class ServerConfig {
 		this.port=port;
 	}
 	
-	public ServerConfig(Class<? extends Servlet> servletClass){
-		this.servletClass=servletClass;
+	public ServerConfig(Class<? extends Event> eventClass){
+		if(Servlet.class.isAssignableFrom(eventClass)) {
+			this.servletClass=(Class<? extends Servlet>)eventClass;
+		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {
+			this.eventClass=(Class<? extends TcpEvent>)eventClass;
+		}
 	}
 	
-	public ServerConfig(int port,Class<? extends Servlet> servletClass){
+	public ServerConfig(int port,Class<? extends Event> eventClass){
 		this.port=port;
-		this.servletClass=servletClass;
+		if(Servlet.class.isAssignableFrom(eventClass)) {
+			this.servletClass=(Class<? extends Servlet>)eventClass;
+		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {
+			this.eventClass=(Class<? extends TcpEvent>)eventClass;
+		}
 	}
 	
-	public ServerConfig(Object servletConfig,Class<? extends Servlet> servletClass){
-		this.servletClass=servletClass;
+	public ServerConfig(Object servletConfig,Class<? extends Event> eventClass){
 		this.servletConfig=servletConfig;
+		if(Servlet.class.isAssignableFrom(eventClass)) {
+			this.servletClass=(Class<? extends Servlet>)eventClass;
+		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {
+			this.eventClass=(Class<? extends TcpEvent>)eventClass;
+		}
 	}
 	
-	public ServerConfig(int port,Object servletConfig,Class<? extends Servlet> servletClass){
+	public ServerConfig(int port,Object servletConfig,Class<? extends Event> eventClass){
 		this.port=port;
-		this.servletClass=servletClass;
 		this.servletConfig=servletConfig;
+		if(Servlet.class.isAssignableFrom(eventClass)) {
+			this.servletClass=(Class<? extends Servlet>)eventClass;
+		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {
+			this.eventClass=(Class<? extends TcpEvent>)eventClass;
+		}
 	}
 }

@@ -1,5 +1,6 @@
 package com.github.lixiang2114.netty.servlet;
 
+import com.github.lixiang2114.netty.event.Event;
 import com.github.lixiang2114.netty.scope.HttpServletRequest;
 import com.github.lixiang2114.netty.scope.HttpServletResponse;
 
@@ -7,7 +8,7 @@ import com.github.lixiang2114.netty.scope.HttpServletResponse;
  * @author Lixiang
  * @description Servlet组件接口
  */
-public interface Servlet {
+public interface Servlet extends Event{
 	/**
 	 * 组件初始化
 	 */

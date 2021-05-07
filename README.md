@@ -1,16 +1,16 @@
 ### 开发背景  
-HttpServer是一款基于JAVA的NIO框架Netty5.X设计的嵌入式服务器，可以无缝嵌入JAVA应用程序中，常见的嵌入式服务器还有Jetty，但可支持独立运行的Jetty被设计的太过于重量化，且在JAVA程序中调用起来也相对较为复杂，而HttpServer则专注于嵌入式设计，将连接器封装于框架内部，仅暴露仅有的端口设置和Servlet接口给应用层，使用起来简单、轻量化。  
+HttpServer是一款基于JAVA的NIO框架Netty4.1设计的嵌入式服务器，可以无缝嵌入JAVA应用程序中，常见的嵌入式服务器还有Jetty，但可支持独立运行的Jetty被设计的太过于重量化，且在JAVA程序中调用起来也相对较为复杂，而HttpServer则专注于嵌入式设计，将连接器封装于框架内部，仅暴露仅有的端口设置和Servlet接口给应用层，使用起来简单、轻量化。  
 ​      
       
 
 ### 功能特性  
-支持Servlet容器、常用的Servlet-API组件，支持会话跟踪和发送重定向；使用异步事件驱动和IO多路复用机制完成客户端连接和请求响应处理过程。  
+支持ISO四层TCP协议和七层HTTP协议，其中，七层应用协议支持Servlet容器、常用的Servlet-API组件，支持会话跟踪和发送重定向；使用异步事件驱动和IO多路复用机制完成客户端连接和请求响应处理过程。  
         
       
 ### 安装部署  
-mkdir -p $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/1.0/
-wget https://github.com/lixiang2114/HttpServer/blob/main/target/HttpServer-1.0.jar -P $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/1.0/   
-wget https://github.com/lixiang2114/HttpServer/blob/main/target/HttpServer-1.0-sources.jar -P $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/1.0/   
+mkdir -p $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/2.0/
+wget https://github.com/lixiang2114/HttpServer/blob/main/target/HttpServer-2.0.jar -P $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/2.0/   
+wget https://github.com/lixiang2114/HttpServer/blob/main/target/HttpServer-2.0-sources.jar -P $MVN_HOME/repository/com/github/lixiang2114/netty/HttpServer/2.0/   
 ​      
 ### 工程应用  
 1. 引用依赖  
@@ -18,12 +18,13 @@ wget https://github.com/lixiang2114/HttpServer/blob/main/target/HttpServer-1.0-s
 <dependency>
     <groupId>io.netty</groupId>
     <artifactId>netty-all</artifactId>
-    <version>5.0.0.Alpha2</version>
+    <version>4.1.63.Final</version>
+    <scope>provided</scope>
 </dependency>
 <dependency>
     <groupId>com.github.lixiang2114.netty</groupId>
     <artifactId>HttpServer</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
 </dependency>
 ```
 2. 应用范例  
@@ -99,4 +100,4 @@ public class UserServlet extends HttpServlet{
 
 ```
 #### 特别说明：  
-ServerConfig类封装了所有的服务器配置和Servlet应用配置，应用层可根据业务需求酌情修改以适应实际应用场景；HttpServer的使用与Tomcat中常规Servlet的使用相同，上述startServer方法被调用之后，服务器将被挂起并等待客户端连接，一旦客户端连接请求到来便委托给绑定的Servlet处理（即：由UserServlet处理）
+ServerConfig类封装了所有的服务器配置和Servlet应用配置，应用层可根据业务需求酌情修改以适应实际应用场景；HttpServer的使用与Tomcat中常规Servlet的使用相同（若基于TCP协议创建服务器请将HttpServer替换成TcpServer），上述startServer方法被调用之后，服务器将被挂起并等待客户端连接，一旦客户端连接请求到来便委托给绑定的Servlet处理（即：由UserServlet处理）
