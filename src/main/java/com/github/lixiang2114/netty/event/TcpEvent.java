@@ -7,6 +7,11 @@ import io.netty.channel.ChannelHandlerContext;
  * @description TCP事件接口
  */
 public interface TcpEvent extends Event{
+	/**
+	 * 组件初始化
+	 */
+	public void init() throws Exception;
+	
     /**
    	 * 回调2:连接被激活后触发
    	 * */
@@ -31,4 +36,9 @@ public interface TcpEvent extends Event{
 	 * 回调5:连接断开之后触发
 	 * */
     public void onDisconnected(ChannelHandlerContext context) throws Exception;
+    
+    /**
+	 * 组件销毁
+	 */
+	public void destory() throws Exception;
 }

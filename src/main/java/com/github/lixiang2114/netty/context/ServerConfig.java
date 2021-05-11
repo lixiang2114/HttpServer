@@ -30,13 +30,18 @@ public class ServerConfig {
 	public Integer qos;
 	
 	/**
+	 * 应用层配置
+	 */
+	public Object appConfig;
+	
+	/**
 	 * 服务端是否需要在读取完数据之后自动进行下次读取
 	 * 默认值为true
 	 */
 	public Boolean autoRead;
 	
 	/**
-	 * Http服务端口
+	 * 服务端口
 	 */
 	public Integer port=8080;
 	
@@ -56,12 +61,7 @@ public class ServerConfig {
 	public Integer clientSndBuf;
 	
 	/**
-	 * Servlet应用配置
-	 */
-	public Object servletConfig;
-	
-	/**
-	 * Http服务是否启动
+	 * 服务是否启动
 	 */
 	public Boolean started=false;
 	
@@ -99,11 +99,6 @@ public class ServerConfig {
 	public Boolean tcpNoDelay=true;
 	
 	/**
-	 * TCP解析帧最大长度(单位:字节)
-	 */
-	public int maxFrameLength=8192;
-	
-	/**
 	 * 服务端上报超时时间(单位:毫秒)
 	 * 某些场景下也表示接收数据超时时间,默认值为0表示无限期等待,
 	 * 若设置一个非负整数值,则在等待时间超过该值时抛出SocketTimeoutException,但输入流并未关闭,可以继续读取数据
@@ -122,10 +117,21 @@ public class ServerConfig {
 	public int socketThreadNums = 1;
 	
 	/**
+	 * 传递数据到应用层前是否去掉分隔符
+	 */
+	public boolean stripDelimiter=true;
+	
+	/**
 	 * IO连接池最大队列尺寸
 	 * 超过此尺寸后,新进入的客户端连接将被丢弃
 	 */
 	public Integer maxQueueSize=1024;
+	
+	/**
+	 * TCP解析帧最大长度(单位:字节)
+	 * 默认32KB
+	 */
+	public int maxFrameLength=32*1024;
 	
 	/**
 	 * Web应用服务器会话跟踪标识
@@ -159,6 +165,11 @@ public class ServerConfig {
 	public Integer connTimeoutMills=30000;
 	
 	/**
+	 * 是否保持HTTP会话
+	 */
+	public boolean enableHttpSession=true;
+	
+	/**
 	 * 服务端Worker线程每次循环执行的最大写次数
 	 * 默认值为16次,超过该次数则放入下次循环中去写,以留给其它客户端通道执行写操作的机会,
 	 * 该值设置得越大,则客户端通道以更大的延时为代价换取更大的吞吐量;反之,以更小的吞吐量换取更快的实时效率
@@ -186,7 +197,7 @@ public class ServerConfig {
 	public Integer maxContentLength=1024*1024;
 	
 	/**
-	 * Http消息体存在于内存中的最大尺寸(默认12MB)
+	 * 消息体存在于内存中的最大尺寸(默认12MB)
 	 * 超过该尺寸将通过磁盘缓冲
 	 */
 	public long maxDataSizeInMemory=0XC00000;
@@ -214,6 +225,11 @@ public class ServerConfig {
 	 * 服务器消息编码类型
 	 */
 	public Charset charset=Charset.defaultCharset();
+	
+	/**
+	 * 当接收数据长度超出最大帧长度是否快速失败
+	 */
+	public boolean fastFailOutofMaxFrameLengh=true;
 	
 	/**
 	 * 会话调度间隔(上一次结束到下一次开始)时间(单位:毫秒)
@@ -273,8 +289,8 @@ public class ServerConfig {
 		}
 	}
 	
-	public ServerConfig(Object servletConfig,Class<? extends Event> eventClass){
-		this.servletConfig=servletConfig;
+	public ServerConfig(Object appConfig,Class<? extends Event> eventClass){
+		this.appConfig=appConfig;
 		if(Servlet.class.isAssignableFrom(eventClass)) {
 			this.servletClass=(Class<? extends Servlet>)eventClass;
 		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {
@@ -282,9 +298,9 @@ public class ServerConfig {
 		}
 	}
 	
-	public ServerConfig(int port,Object servletConfig,Class<? extends Event> eventClass){
+	public ServerConfig(int port,Object appConfig,Class<? extends Event> eventClass){
 		this.port=port;
-		this.servletConfig=servletConfig;
+		this.appConfig=appConfig;
 		if(Servlet.class.isAssignableFrom(eventClass)) {
 			this.servletClass=(Class<? extends Servlet>)eventClass;
 		}else if(TcpEvent.class.isAssignableFrom(eventClass)) {

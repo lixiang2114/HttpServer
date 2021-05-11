@@ -1,18 +1,15 @@
 package com.github.lixiang2114.netty.event;
 
-import com.github.lixiang2114.netty.context.ServerConfig;
-
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @author Lixiang
  * @description TCP事件适配器
  */
-public abstract class AbstractTcpEventAdapter implements TcpEvent{
-	/**
-	 * 服务器配置
-	 */
-	protected ServerConfig serverConfig;
+public abstract class AbstractTcpEventAdapter extends AbstractEvent implements TcpEvent{
+	
+	@Override
+	public void init() throws Exception {}
 
 	@Override
 	public void onActived(ChannelHandlerContext context) throws Exception {}
@@ -28,4 +25,7 @@ public abstract class AbstractTcpEventAdapter implements TcpEvent{
 
 	@Override
 	public void onDisconnected(ChannelHandlerContext context) throws Exception {}
+	
+	@Override
+	public void destory() throws Exception {}
 }

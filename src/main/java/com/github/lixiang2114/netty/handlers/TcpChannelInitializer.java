@@ -38,11 +38,6 @@ public class TcpChannelInitializer extends ChannelInitializer<SocketChannel> {
 	private ChannelHandler decoderChannelHandler;
 	
 	/**
-	 * 通道分隔符操作器
-	 */
-	private ChannelHandler delimiterChannelHandler;
-	
-	/**
 	 * 构造器(服务启动时回调)
 	 * @param config TCP服务器配置
 	 */
@@ -51,7 +46,6 @@ public class TcpChannelInitializer extends ChannelInitializer<SocketChannel> {
 		this.encoderChannelHandler=new StringEncoder(serverConfig.charset);
 		this.decoderChannelHandler=new StringDecoder(serverConfig.charset);
 		if(serverConfig.eventSingleton) this.tcpEvent=TcpEventFactory.getEvent(serverConfig);
-		this.delimiterChannelHandler=new DelimiterBasedFrameDecoder(serverConfig.maxFrameLength, serverConfig.lineDelimiter);
 	}
 	
 	/**
@@ -60,9 +54,25 @@ public class TcpChannelInitializer extends ChannelInitializer<SocketChannel> {
 	@Override
     public void initChannel(SocketChannel socketChannel) throws Exception {
 		ChannelPipeline pipeline = socketChannel.pipeline();
-        pipeline.addLast("framer", delimiterChannelHandler);
+        pipeline.addLast("framer", new DelimiterBasedFrameDecoder(
+				serverConfig.maxFrameLength, 
+				serverConfig.stripDelimiter, 
+				serverConfig.fastFailOutofMaxFrameLengh, 
+				serverConfig.lineDelimiter));
         pipeline.addLast("decoder", decoderChannelHandler);
         pipeline.addLast("encoder", encoderChannelHandler);
         pipeline.addLast("handler", new TcpChannelHandler(serverConfig,tcpEvent));
     }
+	
+	/**
+	 * 销毁TcpEvent上下文
+	 */
+	public void destoryContext() {
+		try {
+			if(null!=this.tcpEvent) this.tcpEvent.destory();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		this.tcpEvent=null;
+	}
 }

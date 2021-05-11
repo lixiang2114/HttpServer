@@ -21,7 +21,7 @@ public class UserAction extends HttpAction{
 	
 	@Override
 	public void init() throws IOException {
-		this.httpConfig=serverConfig.servletConfig;
+		this.httpConfig=serverConfig.appConfig;
 	}
 
 	@Override

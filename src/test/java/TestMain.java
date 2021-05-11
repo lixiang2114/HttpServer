@@ -3,9 +3,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.github.lixiang2114.netty.HttpServer;
-import com.github.lixiang2114.netty.TcpServer;
+import com.github.lixiang2114.netty.Server;
 import com.github.lixiang2114.netty.context.ServerConfig;
+import com.github.lixiang2114.netty.server.HttpServer;
+import com.github.lixiang2114.netty.server.TcpServer;
 
 public class TestMain {
 	
@@ -37,7 +38,8 @@ public class TestMain {
 			public void run() {
 				ServerConfig serverConfig=new ServerConfig(8080);
 				try {
-					new TcpServer(serverConfig).startServer();
+					Server server=new TcpServer(serverConfig);
+					server.startServer();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -52,7 +54,8 @@ public class TestMain {
 			public void run() {
 				ServerConfig serverConfig=new ServerConfig(8080,UserAction.class);
 				try {
-					new HttpServer(serverConfig).startServer();
+					Server server=new HttpServer(serverConfig);
+					server.startServer();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

@@ -155,6 +155,7 @@ public class HttpServletRequest {
 	 * 初始化会话跟踪对象
 	 */
 	private void mayRequireInitHttpSession() {
+		if(!serverConfig.enableHttpSession) return;
 		String sessionId=getSessionId();
 		if(null!=sessionId) this.httpSession=servletContext.getHttpSession(sessionId);
 		if(null==this.httpSession) this.httpSession=new HttpSession(servletContext);

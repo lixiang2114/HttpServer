@@ -1,6 +1,6 @@
 package com.github.lixiang2114.netty.servlet;
 
-import com.github.lixiang2114.netty.context.ServerConfig;
+import com.github.lixiang2114.netty.event.AbstractEvent;
 import com.github.lixiang2114.netty.handlers.PrintWriter;
 import com.github.lixiang2114.netty.scope.HttpServletRequest;
 import com.github.lixiang2114.netty.scope.HttpServletResponse;
@@ -11,11 +11,7 @@ import io.netty.handler.codec.http.HttpMethod;
  * @author Lixiang
  * @description 抽象Servlet组件
  */
-public abstract class HttpServlet implements Servlet {
-	/**
-	 * 服务器配置
-	 */
-	protected ServerConfig serverConfig;
+public abstract class HttpServlet extends AbstractEvent implements Servlet {
 	
 	@Override
 	public void service(HttpServletRequest request,HttpServletResponse response) throws Exception{
@@ -25,7 +21,7 @@ public abstract class HttpServlet implements Servlet {
 		}else if(httpMethod.equals(HttpMethod.POST)) {
 			doPost(request,response);
 		}else{
-			throw new RuntimeException("Not Support Http Method: "+httpMethod);
+			throw new RuntimeException("URI:"+request.getRequestURI()+", Not Support Http Method: "+httpMethod);
 		}
 	}
 	

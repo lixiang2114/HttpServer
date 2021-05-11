@@ -2,7 +2,7 @@ package com.github.lixiang2114.netty.context;
 
 import java.lang.reflect.Field;
 
-import com.github.lixiang2114.netty.servlet.HttpServlet;
+import com.github.lixiang2114.netty.event.AbstractEvent;
 import com.github.lixiang2114.netty.servlet.Servlet;
 
 /**
@@ -20,8 +20,8 @@ public class HttpServletFactory {
 		if(null==serverConfig.servletClass) return null;
 		
 		Servlet servlet=serverConfig.servletClass.newInstance();
-		if(servlet instanceof HttpServlet){
-			Field field=HttpServlet.class.getDeclaredField("serverConfig");
+		if(servlet instanceof AbstractEvent){
+			Field field=AbstractEvent.class.getDeclaredField("serverConfig");
 			field.setAccessible(true);
 			field.set(servlet, serverConfig);
 		}
